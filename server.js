@@ -226,6 +226,15 @@ app.get("/api/report/text", async (req, res) => {
   }
 });
 
+// Manual report override: when the skill pushes a report, use it instead of AI-generated
+app.post("/api/report/text", express.text({ type: "text/plain" }), (req, res) => {
+  const today = new Date().toISOString().slice(0, 10);
+  cache.text = req.body;
+  cache.date = today;
+  console.log(`📝 手动报告已保存：${today}`);
+  res.json({ ok: true, date: cache.date });
+});
+
 app.post("/api/report/refresh", async (req, res) => {
   cache.text = "";
   await refreshCache();
