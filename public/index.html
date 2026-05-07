@@ -233,6 +233,43 @@
       margin-right: 8px;
     }
 
+    /* ── Notes ── */
+    .notes-section { margin-top: 8px; }
+
+    .notes-input {
+      width: 100%;
+      min-height: 80px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(249, 115, 22, 0.15);
+      background: rgba(255, 255, 255, 0.5);
+      font-size: 12px;
+      font-family: inherit;
+      color: #374151;
+      resize: vertical;
+      outline: none;
+      transition: border 0.2s;
+    }
+
+    .notes-input:focus { border-color: #f97316; }
+
+    .notes-save-btn {
+      width: 100%;
+      margin-top: 6px;
+      padding: 8px;
+      border-radius: 8px;
+      border: none;
+      background: linear-gradient(135deg, #f97316, #ec4899);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .notes-save-btn:hover { opacity: 0.85; }
+    .notes-saved { font-size: 11px; color: #10b981; text-align: center; margin-top: 4px; }
+
     /* ── Loading ── */
     .loading {
       text-align: center;
@@ -281,6 +318,12 @@
         <ul id="date-list"><li class="loading">加载中...</li></ul>
       </div>
       <button class="refresh-btn" onclick="loadReport()">刷新当前日期</button>
+      <div class="notes-section">
+        <div class="sidebar-section-title">快速记事</div>
+        <textarea class="notes-input" id="notes-input" placeholder="非代码工作…写文案、开会、画图…"></textarea>
+        <button class="notes-save-btn" onclick="saveNotes()">保存</button>
+        <div class="notes-saved" id="notes-status"></div>
+      </div>
     </aside>
 
     <main class="main" id="main-content">
@@ -430,8 +473,23 @@
       return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
 
+    async function loadNotes() {
+      const date = new Date().toISOString().slice(0, 10);
+      const text = await fetch(`/api/notes?date=${currentDate}`).then(r => r.text());
+      document.getElementById("notes-input").value = text;
+    }
+
+    async function saveNotes() {
+      const text = document.getElementById("notes-input").value;
+      await fetch("/api/notes", { method: "POST", headers: { "Content-Type": "text/plain; charset=utf-8" }, body: text });
+      const s = document.getElementById("notes-status");
+      s.textContent = "已保存 ✓";
+      setTimeout(() => s.textContent = "", 2000);
+    }
+
     (async () => {
       await loadDates();
+      await loadNotes();
       await loadReport();
     })();
   </script>

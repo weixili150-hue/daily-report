@@ -160,6 +160,9 @@ async function generateTextReport(date) {
   const commitsRaw = run(
     `git log --since="${sinceArg}" --until="${untilArg}" --format="%h %s（%an %ad）" --date=format:"%H:%M" 2>/dev/null`
   );
+  const diffStat = run(
+    `git log --since="${sinceArg}" --until="${untilArg}" --stat --format="" 2>/dev/null | tail -30`
+  );
   const filesRaw = run(
     `git log --since="${sinceArg}" --until="${untilArg}" --name-only --format="" 2>/dev/null`
   );
@@ -167,37 +170,53 @@ async function generateTextReport(date) {
   const branch = run("git branch --show-current 2>/dev/null") || "unknown";
   const statusRaw = isToday ? run("git status --short 2>/dev/null") : "";
 
+  // Read daily notes (non-code work tracking)
+  let dailyNotes = "";
+  try { dailyNotes = fs.readFileSync(getNotesFile(date), "utf8"); } catch {}
+
   const dataContext = [
     `日期：${date}`,
     `分支：${branch}`,
+    `今天：${isToday ? "是" : "否（历史记录）"}`,
     "",
-    commitsRaw ? `# Git 提交\n${commitsRaw}` : "# Git 提交\n（无）",
+    dailyNotes ? `# 今日手动记录（非代码工作）\n${dailyNotes}` : "",
     "",
-    files.length > 0 ? `# 提交中涉及的文件\n${files.join("\n")}` : "",
+    commitsRaw ? `# Git 提交记录\n${commitsRaw}` : "# Git 提交记录\n（无提交）",
     "",
-    isToday && statusRaw ? `# 还没提交的文件\n${statusRaw}` : "",
+    diffStat ? `# 代码变更量\n${diffStat}` : "",
+    "",
+    files.length > 0 ? `# 涉及文件\n${files.join("\n")}` : "",
+    "",
+    isToday && statusRaw ? `# 未提交的变更\n${statusRaw}` : "",
     "",
     getProjectContext(),
   ].join("\n");
 
   const msg = await anthropic.messages.create({
     model: "claude-sonnet-4-6-20250501",
-    max_tokens: 800,
-    system: `你是一个工作日报助手。根据 git 数据生成简洁的中文日报。
+    max_tokens: 1000,
+    system: `你是一个资深程序员，每天下班前写工作日报。你要根据提供的 git 数据生成一份准确、详细的中文日报。
 
-关键要求：
-- 分析项目文件结构和文件名，推断今天实际做了什么，不要复述 commit 原文
-- 用通俗易懂的语言描述，让非技术人员也能看懂
-- 备注里需要关注的事项写清楚，但不要冗长
+核心原则：
+1. 仔细阅读每条 commit message，理解其中的技术含义，用自己的话重写
+2. 结合文件结构和文件名，推断项目的整体架构和今天做的工作
+3. 把技术细节翻译成通俗语言，但保留关键术语（如 Express、API、SMTP 等）
+4. 细节要丰富，不要一笔带过。比如"搭建了Web应用"不够，要写"用Express搭建了后端服务，包含报告生成、邮件发送、自动提交等功能"
+5. 不要胡编乱造，只根据提供的数据来描述
+6. 如果今天没有任何提交，但有很多未提交的变更，根据文件名推断正在做的工作
 
-严格按以下格式输出：
-日期：<日期>  <分支>
+严格按以下格式输出（不要加任何开场白、结尾语、引号或代码块标记）：
+
+日期：<日期>  <分支名>
 
 ## 今日完成
-- <用大白话描述今天做了什么>
+- <具体、详细的工作描述，每项一行>
+- <如果今天没有提交但有未提交变更，根据文件名推断描述>
+- <如果完全没有活动，写"今日暂无工作记录">
 
 ## 备注
-- <需要关注的事项>`,
+- <需要关注的事项，如未提交的文件数量、建议等>
+- <如果一切正常，写"无特别事项">`,
     messages: [{ role: "user", content: dataContext }],
   });
 
@@ -242,11 +261,12 @@ app.get("/api/report/text", async (req, res) => {
     const date = req.query.date || new Date().toISOString().slice(0, 10);
     const today = new Date().toISOString().slice(0, 10);
 
-    if (date === today) {
-      if (!cache.text) await refreshCache();
+    // /daily-report pushed a report → use it (matches terminal exactly)
+    if (date === today && cache.text && cache.date === today) {
       return res.type("text/plain; charset=utf-8").send(cache.text);
     }
 
+    // No push yet → auto-generate (no conversation context, but decent quality)
     const report = await generateTextReport(date);
     res.type("text/plain; charset=utf-8").send(report);
   } catch (err) {
@@ -268,6 +288,31 @@ app.post("/api/report/refresh", async (req, res) => {
   cache.text = "";
   await refreshCache();
   res.json({ ok: true, date: cache.date });
+});
+
+// ── Notes API ──
+const NOTES_DIR = path.join(__dirname, "notes");
+function getNotesFile(date) { return path.join(NOTES_DIR, `${date}.md`); }
+
+app.get("/api/notes", (req, res) => {
+  const date = req.query.date || new Date().toISOString().slice(0, 10);
+  try {
+    const content = fs.readFileSync(getNotesFile(date), "utf8");
+    res.type("text/plain; charset=utf-8").send(content);
+  } catch {
+    res.type("text/plain; charset=utf-8").send("");
+  }
+});
+
+app.post("/api/notes", express.text({ type: "text/plain" }), (req, res) => {
+  const date = new Date().toISOString().slice(0, 10);
+  try {
+    if (!fs.existsSync(NOTES_DIR)) fs.mkdirSync(NOTES_DIR, { recursive: true });
+    fs.writeFileSync(getNotesFile(date), req.body, "utf8");
+    res.json({ ok: true, date });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 app.get("/api/dates", (req, res) => {
