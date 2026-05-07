@@ -302,12 +302,23 @@ app.get("/api/report/text", async (req, res) => {
     const date = req.query.date || new Date().toISOString().slice(0, 10);
     const today = new Date().toISOString().slice(0, 10);
 
-    // /daily-report pushed a report → use it (matches terminal exactly)
+    // /daily-report 推送的报告 → 直接使用（保证和终端输出一致）
     if (date === today && cache.text && cache.date === today) {
       return res.type("text/plain; charset=utf-8").send(cache.text);
     }
 
-    // No push yet → auto-generate (no conversation context, but decent quality)
+    // 今天还没有推送 → 不自动生成，保证质量
+    if (date === today) {
+      return res.type("text/plain; charset=utf-8").send(`日期：${today}  —
+
+## 今日完成
+- 请运行 /daily-report 命令生成今日报告
+
+## 备注
+- 网页端只展示 /daily-report 推送的内容，以确保报告质量`);
+    }
+
+    // 历史日期 → 只能自动生成
     const report = await generateTextReport(date);
     res.type("text/plain; charset=utf-8").send(report);
   } catch (err) {
