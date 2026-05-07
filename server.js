@@ -53,6 +53,35 @@ async function sendEmail(report) {
   console.log(`📧 报告已发送至 ${cfg.to}`);
 }
 
+// ── Auto-commit at 21:55 daily ──
+function autoCommit() {
+  try {
+    const status = run("git status --porcelain 2>/dev/null");
+    if (!status) { console.log("📦 无变更，跳过自动提交"); return; }
+
+    run("git add -A 2>/dev/null");
+    const date = new Date().toISOString().slice(0, 10);
+    run(`git commit -m "自动提交 — ${date}" 2>/dev/null`);
+    console.log(`📦 自动提交完成：${date}`);
+  } catch (e) {
+    console.error("自动提交失败：", e.message);
+  }
+}
+
+function scheduleAutoCommit() {
+  const now = new Date();
+  const t = new Date(now);
+  t.setHours(21, 55, 0, 0);
+  if (t <= now) t.setDate(t.getDate() + 1);
+
+  const ms = t - now;
+  console.log(`📦 下次自动提交：${t.toLocaleString("zh-CN")}`);
+  setTimeout(() => {
+    autoCommit();
+    scheduleAutoCommit();
+  }, ms);
+}
+
 // ── Cache ──
 const cache = { date: "", text: "", updating: false };
 
@@ -280,5 +309,6 @@ app.post("/api/email-test", async (req, res) => {
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`📊 每日总结已启动 → http://localhost:${PORT}`);
   refreshCache();
+  scheduleAutoCommit();
   scheduleNext();
 });
