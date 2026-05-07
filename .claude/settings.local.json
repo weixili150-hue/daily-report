@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c \"import flask; import openai; print\\('Dependencies OK'\\)\")",
+      "Bash(python3 server.py)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5080/console)",
+      "Bash(open *)",
+      "Bash(sips -g all \"/Users/liweixi/.claude/image-cache/f0dd8924-07f9-4323-9996-5b1f3bb4afd5/2.png\")",
+      "Bash(git init *)",
+      "Bash(git config *)",
+      "Bash(git commit *)",
+      "Bash(npm --version)",
+      "Bash(npm install *)",
+      "Bash(node *)",
+      "Bash(curl -s http://localhost:3456/api/report)",
+      "Bash(pkill -f \"node server.js\")",
+      "Bash(curl -s http://localhost:3456/api/report/text)",
+      "Bash(curl *)",
+      "Bash(nc -w 5 smtp.163.com 587)",
+      "Bash(nc -w 5 smtp.163.com 465)",
+      "Bash(timeout 5 bash -c 'echo \"QUIT\" | openssl s_client -connect smtp.163.com:465 -quiet 2>&1')",
+      "Bash(timeout 5 bash -c 'echo \"QUIT\" | openssl s_client -connect smtp.163.com:587 -starttls smtp -quiet 2>&1')",
+      "Bash(awk '{print $2}')",
+      "Bash(git add *)"
+    ]
+  }
+}

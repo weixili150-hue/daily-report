@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>每日工作总结</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: linear-gradient(160deg, #fdf2f8 0%, #f0f9ff 30%, #ecfdf5 60%, #fef3c7 100%);
+      min-height: 100vh;
+      color: #374151;
+    }
+
+    .app {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 260px;
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(16px);
+      border-right: 1px solid rgba(251, 146, 60, 0.15);
+      padding: 28px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    .logo {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      background: linear-gradient(135deg, #f97316, #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .sidebar-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #9ca3af;
+      margin-bottom: 8px;
+    }
+
+    #date-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    #date-list li {
+      padding: 10px 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      color: #6b7280;
+      transition: all 0.2s;
+    }
+
+    #date-list li:hover {
+      background: rgba(249, 115, 22, 0.08);
+      color: #f97316;
+    }
+
+    #date-list li.active {
+      background: linear-gradient(135deg, rgba(249, 115, 22, 0.12), rgba(236, 72, 153, 0.12));
+      color: #f97316;
+      font-weight: 700;
+    }
+
+    .refresh-btn {
+      width: 100%;
+      padding: 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(249, 115, 22, 0.2);
+      background: rgba(249, 115, 22, 0.06);
+      color: #f97316;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .refresh-btn:hover {
+      background: rgba(249, 115, 22, 0.12);
+      border-color: rgba(249, 115, 22, 0.35);
+    }
+
+    /* ── Countdown ── */
+    .countdown-box {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(253, 242, 248, 0.6));
+      border: 1px solid rgba(236, 72, 153, 0.12);
+      border-radius: 14px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .countdown-label {
+      font-size: 11px;
+      color: #9ca3af;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .countdown-time {
+      font-size: 26px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      background: linear-gradient(135deg, #f97316, #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-top: 2px;
+    }
+
+    /* ── Main ── */
+    .main {
+      flex: 1;
+      padding: 40px 48px;
+      overflow-y: auto;
+    }
+
+    .header {
+      margin-bottom: 28px;
+    }
+
+    .header h1 {
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #1f2937;
+    }
+
+    .badge-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .badge-date {
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      color: #b45309;
+    }
+
+    .badge-branch {
+      background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+      color: #1d4ed8;
+    }
+
+    /* ── Table ── */
+    .report-table-wrap {
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(249, 115, 22, 0.1);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(249, 115, 22, 0.06);
+    }
+
+    .report-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .report-table th {
+      text-align: left;
+      padding: 16px 24px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      border-bottom: 2px solid rgba(249, 115, 22, 0.12);
+    }
+
+    .report-table th:nth-child(1) { background: rgba(251, 146, 60, 0.06); width: 100px; color: #f97316; }
+    .report-table th:nth-child(2) { background: rgba(236, 72, 153, 0.04); color: #db2777; }
+
+    .report-table td {
+      padding: 14px 24px;
+      font-size: 14.5px;
+      line-height: 1.8;
+      vertical-align: top;
+      border-bottom: 1px solid rgba(249, 115, 22, 0.05);
+    }
+
+    .report-table td:first-child {
+      font-weight: 700;
+      color: #f97316;
+      background: rgba(251, 146, 60, 0.02);
+      white-space: nowrap;
+    }
+
+    .report-table td:last-child {
+      color: #4b5563;
+    }
+
+    .report-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .report-table ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .report-table ul li {
+      padding: 3px 0;
+    }
+
+    .report-table ul li::before {
+      content: "•";
+      color: #ec4899;
+      font-weight: bold;
+      margin-right: 8px;
+    }
+
+    /* ── Loading ── */
+    .loading {
+      text-align: center;
+      padding: 80px;
+      color: #9ca3af;
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid rgba(249, 115, 22, 0.1);
+      border-top-color: #f97316;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 14px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .fade-in { animation: fadeIn 0.4s ease; }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .app { flex-direction: column; }
+      .sidebar { width: 100%; height: auto; position: static; padding: 18px; border-right: none; border-bottom: 1px solid rgba(251, 146, 60, 0.15); }
+      .main { padding: 20px 16px; }
+      .report-table th:nth-child(1) { width: 70px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="logo">Daily Report</div>
+      <div class="countdown-box">
+        <div class="countdown-label">距离下次自动更新</div>
+        <div class="countdown-time" id="countdown">--:--:--</div>
+      </div>
+      <div>
+        <div class="sidebar-section-title">历史记录</div>
+        <ul id="date-list"><li class="loading">加载中...</li></ul>
+      </div>
+      <button class="refresh-btn" onclick="loadReport()">刷新当前日期</button>
+    </aside>
+
+    <main class="main" id="main-content">
+      <div class="loading"><div class="spinner"></div>正在加载...</div>
+    </main>
+  </div>
+
+  <script>
+    let currentDate = new Date().toISOString().slice(0, 10);
+    let nextRefreshTime = null;
+
+    async function fetchJSON(url) {
+      const r = await fetch(url);
+      return r.json();
+    }
+
+    async function loadDates() {
+      const dates = await fetchJSON("/api/dates");
+      const list = document.getElementById("date-list");
+      const today = new Date().toISOString().slice(0, 10);
+      if (!dates.includes(today)) dates.unshift(today);
+
+      list.innerHTML = dates
+        .map(d => `<li class="${d === currentDate ? "active" : ""}" onclick="selectDate('${d}')">${formatDate(d)}</li>`)
+        .join("");
+    }
+
+    function formatDate(d) {
+      const dt = new Date(d);
+      const today = new Date().toISOString().slice(0, 10);
+      const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+      const wd = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+      const label = d === today ? "今天" : d === yesterday ? "昨天" : wd[dt.getDay()];
+      return `${d} ${label}`;
+    }
+
+    async function selectDate(date) {
+      currentDate = date;
+      await loadDates();
+      await loadReport();
+    }
+
+    function parseTableReport(text) {
+      // Parse the text report into table rows: [{section, content}]
+      const rows = [];
+      let currentSection = "";
+      let currentItems = [];
+
+      text.split("\n").forEach(line => {
+        const trimmed = line.trim();
+        if (!trimmed) return;
+
+        if (trimmed.startsWith("## ")) {
+          if (currentSection && currentItems.length > 0) {
+            rows.push({ section: currentSection, items: [...currentItems] });
+          }
+          currentSection = trimmed.replace("## ", "");
+          currentItems = [];
+        } else if (trimmed.startsWith("- ")) {
+          currentItems.push(trimmed.replace("- ", ""));
+        } else if (trimmed.startsWith("日期：")) {
+          // header line, skip in table
+        }
+      });
+
+      if (currentSection && currentItems.length > 0) {
+        rows.push({ section: currentSection, items: [...currentItems] });
+      }
+
+      return rows;
+    }
+
+    async function loadReport() {
+      const main = document.getElementById("main-content");
+      main.innerHTML = '<div class="loading"><div class="spinner"></div>正在加载...</div>';
+
+      const [data, textReport] = await Promise.all([
+        fetchJSON(`/api/report?date=${currentDate}`),
+        fetch(`/api/report/text?date=${currentDate}`).then(r => r.text()),
+      ]);
+
+      const { date, branch } = data;
+
+      // Extract date header from report
+      const dateMatch = textReport.match(/日期：(.*)/);
+      const headerDate = dateMatch ? dateMatch[1] : formatDate(date);
+
+      const rows = parseTableReport(textReport);
+
+      let html = `
+        <div class="header fade-in">
+          <h1>工作总结</h1>
+          <div class="badge-row">
+            <span class="badge badge-date">${headerDate}</span>
+            <span class="badge badge-branch">${branch}</span>
+          </div>
+        </div>
+
+        <div class="report-table-wrap fade-in">
+          <table class="report-table">
+            <thead>
+              <tr>
+                <th>栏目</th>
+                <th>内容</th>
+              </tr>
+            </thead>
+            <tbody>`;
+
+      rows.forEach(row => {
+        html += `
+          <tr>
+            <td>${esc(row.section)}</td>
+            <td><ul>${row.items.map(i => `<li>${esc(i)}</li>`).join("")}</ul></td>
+          </tr>`;
+      });
+
+      html += `
+            </tbody>
+          </table>
+        </div>`;
+
+      main.innerHTML = html;
+    }
+
+    // ── Countdown ──
+    function updateCountdown() {
+      const el = document.getElementById("countdown");
+      if (!el) return;
+
+      const now = new Date();
+      const target = new Date(now);
+      target.setHours(22, 0, 0, 0);
+      if (target <= now) target.setDate(target.getDate() + 1);
+
+      const diff = target - now;
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+
+      el.textContent = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    }
+
+    setInterval(updateCountdown, 1000);
+    updateCountdown();
+
+    function esc(s) {
+      return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    (async () => {
+      await loadDates();
+      await loadReport();
+    })();
+  </script>
+</body>
+</html>
