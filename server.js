@@ -97,7 +97,8 @@ const cache = { date: "", text: "", updating: false };
 
 async function refreshCache() {
   const today = new Date().toISOString().slice(0, 10);
-  if (cache.date === today && cache.text) return;
+  // 已有高质量报告（手动推送或 AI 成功生成）则跳过，失败兜底则允许重试
+  if (cache.date === today && cache.text && !cache.text.includes("AI 报告生成失败")) return;
 
   cache.updating = true;
   try {
@@ -375,7 +376,7 @@ app.post("/api/email-test", async (req, res) => {
 // ── Start ──
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`📊 每日总结已启动 → http://localhost:${PORT}`);
-  refreshCache();
+  // 不在启动时自动生成报告（云端部署重启会清空已推送的报告）
   scheduleAutoCommit();
   scheduleNext();
 });
