@@ -94,7 +94,7 @@ function scheduleAutoCommit() {
 }
 
 // ── Cache ──
-const CACHE_FILE = path.join(__dirname, ".cache.json");
+const CACHE_FILE = path.join(__dirname, "data", "latest-report.txt");
 const cache = loadCache();
 
 function loadCache() {
@@ -102,11 +102,23 @@ function loadCache() {
     const d = JSON.parse(fs.readFileSync(CACHE_FILE, "utf8"));
     if (d.date && d.text) return { date: d.date, text: d.text, updating: false };
   } catch {}
+  // 回退到仓库中的纯文本报告（随代码部署自带）
+  const textFile = path.join(__dirname, "data", "latest-report.txt");
+  try {
+    const text = fs.readFileSync(textFile, "utf8").trim();
+    const today = new Date().toISOString().slice(0, 10);
+    if (text && text.includes(today)) return { date: today, text, updating: false };
+  } catch {}
   return { date: "", text: "", updating: false };
 }
 
 function saveCache() {
+  const dir = path.dirname(CACHE_FILE);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(CACHE_FILE, JSON.stringify({ date: cache.date, text: cache.text }), "utf8");
+  // Also write plain text version committed to repo
+  const textFile = path.join(__dirname, "data", "latest-report.txt");
+  fs.writeFileSync(textFile, cache.text, "utf8");
 }
 
 async function refreshCache() {
