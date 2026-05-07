@@ -21,7 +21,13 @@
       "Bash(timeout 5 bash -c 'echo \"QUIT\" | openssl s_client -connect smtp.163.com:465 -quiet 2>&1')",
       "Bash(timeout 5 bash -c 'echo \"QUIT\" | openssl s_client -connect smtp.163.com:587 -starttls smtp -quiet 2>&1')",
       "Bash(awk '{print $2}')",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(gh auth *)",
+      "Bash(git remote *)",
+      "Bash(git push *)",
+      "Bash(railway login *)",
+      "Bash(npx *)",
+      "Bash(python3 *)"
     ]
   }
 }

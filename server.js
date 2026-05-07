@@ -202,10 +202,11 @@ async function generateTextReport(date) {
     getProjectContext(),
   ].join("\n");
 
-  const msg = await anthropic.messages.create({
-    model: "claude-sonnet-4-6-20250501",
-    max_tokens: 1000,
-    system: `你是一个资深程序员，每天下班前写工作日报。你要根据提供的 git 数据生成一份准确、详细的中文日报。
+  try {
+    const msg = await anthropic.messages.create({
+      model: "claude-sonnet-4-6-20250501",
+      max_tokens: 1000,
+      system: `你是一个资深程序员，每天下班前写工作日报。你要根据提供的 git 数据生成一份准确、详细的中文日报。
 
 核心原则：
 1. 仔细阅读每条 commit message，理解其中的技术含义，用自己的话重写
@@ -227,10 +228,21 @@ async function generateTextReport(date) {
 ## 备注
 - <需要关注的事项，如未提交的文件数量、建议等>
 - <如果一切正常，写"无特别事项">`,
-    messages: [{ role: "user", content: dataContext }],
-  });
+      messages: [{ role: "user", content: dataContext }],
+    });
+    return msg.content[0].text;
+  } catch (e) {
+    console.error("AI 报告生成失败：", e.message);
+    return `日期：${date}  ${branch}
 
-  return msg.content[0].text;
+## 今日完成
+- ${commitsRaw ? commitsRaw.split("\n").length + " 个提交（详见下方原始记录）" : ""}${!commitsRaw && statusRaw ? "有未提交的变更（见备注）" : ""}${!commitsRaw && !statusRaw && !dailyNotes ? "今日暂无工作记录" : ""}
+${dailyNotes ? "- " + dailyNotes.split("\n").filter(Boolean).join("\n- ") : ""}
+
+## 备注
+- AI 报告生成失败：${e.message}
+${statusRaw ? "- 未提交的变更：\n" + statusRaw.split("\n").slice(0, 10).map(l => "  " + l).join("\n") : ""}`;
+  }
 }
 
 // ── API ──
