@@ -6,7 +6,7 @@ const Anthropic = require("@anthropic-ai/sdk");
 const nodemailer = require("nodemailer");
 
 const app = express();
-const PORT = 3456;
+const PORT = process.env.PORT || 3456;
 const PROJECT_DIR = __dirname;
 const EMAIL_CONFIG_FILE = path.join(__dirname, ".email-config.json");
 
@@ -17,6 +17,16 @@ app.use(express.json());
 
 // ── Email Config ──
 function loadEmailConfig() {
+  // Priority: env vars (for cloud deployment), then config file (local)
+  if (process.env.EMAIL_USER) {
+    return {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+      to: process.env.EMAIL_TO,
+      host: process.env.EMAIL_HOST || "smtp.163.com",
+      port: parseInt(process.env.EMAIL_PORT) || 465,
+    };
+  }
   try {
     return JSON.parse(fs.readFileSync(EMAIL_CONFIG_FILE, "utf8"));
   } catch {
