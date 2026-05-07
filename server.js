@@ -123,8 +123,13 @@ function saveCache() {
 
 async function refreshCache() {
   const today = new Date().toISOString().slice(0, 10);
-  // 已有高质量报告（手动推送或 AI 成功生成）则跳过，失败兜底则允许重试
-  if (cache.date === today && cache.text && !cache.text.includes("AI 报告生成失败")) return;
+
+  // 已有高质量报告 → 直接发邮件，不重新生成
+  if (cache.date === today && cache.text && !cache.text.includes("AI 报告生成失败")) {
+    console.log(`📝 报告已存在，直接发送邮件：${today}`);
+    await sendEmail(cache.text);
+    return;
+  }
 
   cache.updating = true;
   try {
