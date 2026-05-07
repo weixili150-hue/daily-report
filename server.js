@@ -94,7 +94,20 @@ function scheduleAutoCommit() {
 }
 
 // ── Cache ──
-const cache = { date: "", text: "", updating: false };
+const CACHE_FILE = path.join(__dirname, ".cache.json");
+const cache = loadCache();
+
+function loadCache() {
+  try {
+    const d = JSON.parse(fs.readFileSync(CACHE_FILE, "utf8"));
+    if (d.date && d.text) return { date: d.date, text: d.text, updating: false };
+  } catch {}
+  return { date: "", text: "", updating: false };
+}
+
+function saveCache() {
+  fs.writeFileSync(CACHE_FILE, JSON.stringify({ date: cache.date, text: cache.text }), "utf8");
+}
 
 async function refreshCache() {
   const today = new Date().toISOString().slice(0, 10);
@@ -105,6 +118,7 @@ async function refreshCache() {
   try {
     cache.text = await generateTextReport(today);
     cache.date = today;
+    saveCache();
     console.log(`📝 报告已更新：${today}`);
     await sendEmail(cache.text);
   } catch (e) {
@@ -307,6 +321,7 @@ app.post("/api/report/text", express.text({ type: "text/plain" }), (req, res) =>
   const today = new Date().toISOString().slice(0, 10);
   cache.text = req.body;
   cache.date = today;
+  saveCache();
   console.log(`📝 手动报告已保存：${today}`);
   res.json({ ok: true, date: cache.date });
 });
