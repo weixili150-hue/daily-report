@@ -263,7 +263,6 @@ async function generateTextReport(date) {
     // DeepSeek 思考模式：提升报告质量
     if (process.env.DEEPSEEK_API_KEY) {
       body.thinking = { type: "enabled" };
-      body.reasoning_effort = "high";
     }
 
     const resp = await fetch(`${AI_BASE_URL}/chat/completions`, {
