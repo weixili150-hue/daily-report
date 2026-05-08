@@ -259,10 +259,11 @@ async function generateTextReport(date) {
 - <需要关注的事项，如未提交的文件数量、建议等>
 - <如果一切正常，写"无特别事项">`;
 
-    const body = { model: AI_MODEL, max_tokens: 1000, messages: [{ role: "system", content: systemPrompt }, { role: "user", content: dataContext }] };
+    const body = { model: AI_MODEL, max_tokens: 1000000, messages: [{ role: "system", content: systemPrompt }, { role: "user", content: dataContext }] };
     // DeepSeek 思考模式：提升报告质量
     if (process.env.DEEPSEEK_API_KEY) {
       body.thinking = { type: "enabled" };
+      body.output_config = { effort: "max" };
     }
 
     const resp = await fetch(`${AI_BASE_URL}/chat/completions`, {
