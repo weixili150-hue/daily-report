@@ -449,12 +449,9 @@ Return ONLY valid JSON, no other text, no markdown formatting:
 If there are no difficult words, return an empty array for explanations.`;
 
   try {
-    const apiKey = process.env.DEEPSEEK_API_KEY || process.env.ANTHROPIC_API_KEY;
-    const baseUrl = process.env.DEEPSEEK_API_KEY ? "https://api.deepseek.com/v1" : "https://api.anthropic.com/v1";
-    const model = process.env.DEEPSEEK_API_KEY ? "deepseek-chat" : "claude-sonnet-4-6-20250501";
 
     const body = {
-      model,
+      model: AI_MODEL,
       max_tokens: 2000,
       temperature: 0.6,
       messages: [
@@ -463,15 +460,16 @@ If there are no difficult words, return an empty array for explanations.`;
       ]
     };
 
-    if (process.env.DEEPSEEK_API_KEY) {
+    if (AI_MODEL === "deepseek-chat") {
       body.thinking = { type: "enabled" };
+      body.output_config = { effort: "max" };
     }
 
-    const resp = await fetch(`${baseUrl}/chat/completions`, {
+    const resp = await fetch(`${AI_BASE_URL}/chat/completions`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`
+        "Authorization": `Bearer ${AI_API_KEY}`
       },
       body: JSON.stringify(body)
     });
