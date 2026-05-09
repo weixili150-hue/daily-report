@@ -1,4 +1,4 @@
-# 口语世界冠军 — 设计文档
+# 我是口语世界冠军 — 设计文档
 
 ## 概述
 
@@ -55,7 +55,7 @@
 ## 数据模型（localStorage）
 
 ```js
-// key: "speaking-champion-history"
+// key: "im-speaking-champion-history"
 [
   {
     id: "1705200000000",
