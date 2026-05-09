@@ -2,6 +2,7 @@ const express = require("express");
 const { execSync } = require("child_process");
 const path = require("path");
 const fs = require("fs");
+require("dotenv").config();
 const nodemailer = require("nodemailer");
 
 const app = express();
