@@ -29,7 +29,18 @@
       "Bash(npx *)",
       "Bash(python3 *)",
       "Bash(git *)",
-      "Bash(/Users/liweixi/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/brainstorming/scripts/start-server.sh *)"
+      "Bash(/Users/liweixi/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/brainstorming/scripts/start-server.sh *)",
+      "Bash(ipconfig getifaddr *)",
+      "Bash(/usr/libexec/ApplicationFirewall/socketfilterfw *)",
+      "Bash(brew install *)",
+      "Read(//opt/homebrew/bin/**)",
+      "Read(//usr/local/bin/**)",
+      "Bash(sw_vers -productVersion)",
+      "Bash(tar xzf *)",
+      "Bash(/tmp/gh_2.63.2_macOS_arm64/bin/gh version *)",
+      "Bash(/tmp/gh_2.92.0_macOS_arm64/bin/gh version *)",
+      "Bash(mdfind -name \"gh\" -onlyin /Applications)",
+      "Bash(ssh *)"
     ]
   }
 }
