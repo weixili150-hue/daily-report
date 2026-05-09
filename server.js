@@ -427,6 +427,76 @@ app.post("/api/email-test", async (req, res) => {
   }
 });
 
+// ── Translate API ──
+app.post("/api/translate", async (req, res) => {
+  const { text } = req.body || {};
+  if (!text || !text.trim()) {
+    return res.status(400).json({ error: "请输入中文" });
+  }
+
+  const systemPrompt = `You are an English speaking coach for Chinese learners. Translate the given Chinese into simple, natural, everyday American English — the way a native speaker would actually say it in daily conversation. Keep it short and colloquial, not textbook English.
+
+Also, identify any words in the translation that are above CEFR A2 level (basic vocabulary). For each such word, provide a brief Chinese explanation.
+
+Return ONLY valid JSON, no other text, no markdown formatting:
+{
+  "english": "<translation>",
+  "explanations": [
+    { "word": "<word>", "meaning": "<Chinese explanation>" }
+  ]
+}
+
+If there are no difficult words, return an empty array for explanations.`;
+
+  try {
+    const apiKey = process.env.DEEPSEEK_API_KEY || process.env.ANTHROPIC_API_KEY;
+    const baseUrl = process.env.DEEPSEEK_API_KEY ? "https://api.deepseek.com/v1" : "https://api.anthropic.com/v1";
+    const model = process.env.DEEPSEEK_API_KEY ? "deepseek-chat" : "claude-sonnet-4-6-20250501";
+
+    const body = {
+      model,
+      max_tokens: 2000,
+      temperature: 0.6,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: text.trim() }
+      ]
+    };
+
+    if (process.env.DEEPSEEK_API_KEY) {
+      body.thinking = { type: "enabled" };
+    }
+
+    const resp = await fetch(`${baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      },
+      body: JSON.stringify(body)
+    });
+
+    const data = await resp.json();
+    if (!resp.ok) {
+      console.error("Translate API error:", resp.status, JSON.stringify(data).slice(0, 200));
+      return res.status(500).json({ error: "翻译失败，请稍后再试" });
+    }
+
+    const content = data.choices[0].message.content.trim();
+    // Parse JSON from AI response — strip markdown code fences if present
+    const jsonStr = content.replace(/^```json\s*/, "").replace(/```$/, "").trim();
+    const result = JSON.parse(jsonStr);
+
+    res.json({
+      english: result.english || content,
+      explanations: result.explanations || []
+    });
+  } catch (e) {
+    console.error("Translate error:", e.message);
+    res.status(500).json({ error: "翻译失败，请稍后再试" });
+  }
+});
+
 // ── Start ──
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`📊 每日总结已启动 → http://localhost:${PORT}`);
