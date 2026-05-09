@@ -28,7 +28,8 @@
       "Bash(railway login *)",
       "Bash(npx *)",
       "Bash(python3 *)",
-      "Bash(git *)"
+      "Bash(git *)",
+      "Bash(/Users/liweixi/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/brainstorming/scripts/start-server.sh *)"
     ]
   }
 }
